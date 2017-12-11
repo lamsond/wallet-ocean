@@ -9,14 +9,16 @@ WAVE_RAD = 30
 WAVE_FACTOR = 1.6
 WAVE_SPEED = 1
 WAVE_LENGTH = int(WAVE_RAD * WAVE_FACTOR)
-SINK_SOURCE_TIME = FPS*2
+CHILL_TIME = FPS*4
+SINK_SOURCE_TIME = FPS*6
+PHI = 1.618
 
 #color constants
 NIGHT = (11, 22, 33)
 OCEAN = (0, 153, 202)
 
 #game vars
-water_height = 100
+water_height = int(WIN_HEIGHT/(PHI+1))
 wave_x = 0
 sink_count = 0
 sink_dir = 0
@@ -50,9 +52,12 @@ def move_wave(x):
 
 def update_water_height(y):
 	global sink_count, sink_dir
-	if sink_count == SINK_SOURCE_TIME:
+	if sink_count >= SINK_SOURCE_TIME:
 		sink_count = 0
+		sink_dir = 0
+	elif sink_count == CHILL_TIME:
 		sink_dir = random.choice([-1, 0, 1])
+		sink_count += 1
 	else:
 		sink_count += 1
 	y += sink_dir
