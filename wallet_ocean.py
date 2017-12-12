@@ -44,10 +44,10 @@ def draw_ocean(surf, x):
 	pygame.draw.rect(surf, NIGHT, (0, 0, WIN_WIDTH, water_height))
 
 def move_wave(x):
-	if x < WAVE_LENGTH:
-		x += WAVE_SPEED
+	if x > 0:
+		x -= WAVE_SPEED
 	else:
-		x = 0
+		x = WAVE_LENGTH
 	return x
 
 def update_water_height(y):
