@@ -33,7 +33,7 @@ clock = pygame.time.Clock()
 def init_image(path, sf):
 	img = pygame.image.load(path)
 	(w, h) = img.get_size()
-	img = pygame.image.transform(int(sf*w), int(sf*h))
+	img = pygame.transform.scale(img, (int(sf*w), int(sf*h)))
 	return img
 
 def draw_ocean(surf, x):
@@ -62,13 +62,41 @@ def update_water_height(y):
 		sink_count += 1
 	y += sink_dir
 	return y
+
+HAPPY_SQUID = init_image("SquidPink.png", 0.2)
+CRAZY_SQUID = init_image("SquidOrange.png", 0.2)
+GATOR_CORN = init_image("GatorCorn.png", 0.2)
+SHARK = init_image("GatorCorn.png", 0.2)
+
+class HappySquid():
+	def __init__(self, x, y):
+		self.img = HAPPY_SQUID
+		self.x = x
+		self.y = y
+		self.dir_y = -1
+		self.speed_x = 3
+		self.speed_y = 5
+		
+	def draw(self, surf):
+		surf.blit(self.img, (self.x, self.y))
+	
+	def move(self):
+		if self.x < 0 - 50:
+			self.x = WIN_WIDTH
+		self.x -= self.speed_x
+		if self.y > WIN_HEIGHT - 250 or self.y <= water_height+13:
+			self.dir_y *= -1
+		self.y += self.speed_y * self.dir_y
+		
+bob = HappySquid(WIN_WIDTH, WIN_HEIGHT/2)		
 	
 #game loop
 while True:
 	draw_ocean(screen, wave_x)
+	bob.draw(screen)
 	wave_x = move_wave(wave_x)
 	water_height = update_water_height(water_height)
-	
+	bob.move()
 	for event in pygame.event.get():
 		if event.type == pygame.QUIT:
 			pygame.quit()
