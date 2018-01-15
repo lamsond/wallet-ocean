@@ -13,14 +13,21 @@ CHILL_TIME = 120 #let water height unchanged
 SINK_SOURCE_TIME = 180 #raise or lower time
 PHI = 1.618 #golden ratio
 MAX_WATER_HEIGHT = -15
-MIN_WATER_HEIGHT = WIN_HEIGHT/2 + 34 
-SHARK_THRESHOLD = 40 #triggers shark_bait mode
+MIN_WATER_HEIGHT = WIN_HEIGHT/2 - 100 
+SHARK_THRESHOLD = 30 #triggers shark_bait mode
 COLOR_FRAMES = 5 #how often color updates
+WATER_HEIGHT_CHOICES = [-1, 0, 1]
+COLOR_CHANGE_CHOICES = [-2, -1, 0, 1, 2]
+GROWTH_RATE = 0.2
+COIN_RADIUS = 20
+COIN_ACCEL = 0.1
+COIN_SINK_SPEED = 2
 
 #rgb color constants
 NIGHT = (11, 22, 33)
 OCEAN = (0, 153, 202)
 BLOOD_OCEAN = (153, 0, 49)
+GOLD = (240, 220, 20)
 
 #game vars
 water_height = int(WIN_HEIGHT/(PHI+1))
@@ -29,7 +36,14 @@ sink_count = 0
 sink_dir = 0
 water_color = OCEAN
 shark_bait = False
-color_counter = 0
+color_count = 0
+happy_birth = 300
+crazy_birth = 10 * happy_birth
+scary_birth = 60
+squid_count = 0
+shark_count = 0
+coin_count = 0
+coin_birth = FPS*5
 
 #init game spacetime
 pygame.init()
@@ -43,6 +57,12 @@ def init_image(path, sf):
 	(w, h) = img.get_size()
 	img = pygame.transform.scale(img, (int(sf*w), int(sf*h)))
 	return img
+
+#game images
+HAPPY_SQUID = init_image("SquidPink.png", 0.18)
+CRAZY_SQUID = init_image("SquidOrange.png", 0.18)
+GATOR_CORN = init_image("GatorCorn.png", 0.65)
+SHARK = init_image("SharkGrey.png", 0.65)
 
 #draw waves and night sky
 def draw_ocean(surf, x, clr):
@@ -72,7 +92,7 @@ def update_water_height(y):
 		elif water_height > MIN_WATER_HEIGHT:
 			sink_dir = -1
 		else:
-			sink_dir = random.choice([-1, 0, 1])
+			sink_dir = random.choice(WATER_HEIGHT_CHOICES)
 		sink_count += 1
 	else:
 		sink_count += 1
@@ -83,7 +103,7 @@ def update_water_height(y):
 def update_water_color(clr):
 	global shark_bait
 	reset = False
-	r = random.choice([-2, -1, 0, 1, 2])
+	r = random.choice(COLOR_CHANGE_CHOICES)
 	if shark_bait and clr[0] < BLOOD_OCEAN[0]:
 		r = 1
 	elif shark_bait and clr[0] >= BLOOD_OCEAN[0]:
@@ -103,11 +123,6 @@ def update_water_color(clr):
 		new_color = OCEAN
 	return new_color
 
-HAPPY_SQUID = init_image("SquidPink.png", 0.2)
-CRAZY_SQUID = init_image("SquidOrange.png", 0.2)
-GATOR_CORN = init_image("GatorCorn.png", 0.2)
-SHARK = init_image("GatorCorn.png", 0.2)
-
 class HappySquid():
 	def __init__(self, x, y):
 		self.img = HAPPY_SQUID
@@ -121,12 +136,15 @@ class HappySquid():
 		surf.blit(self.img, (self.x, self.y))
 	
 	def move(self):
-		if self.x < 0 - 50:
-			self.x = WIN_WIDTH
-		self.x -= self.speed_x
-		if self.y > WIN_HEIGHT - 250 or self.y <= water_height+13:
-			self.dir_y *= -1
-		self.y += self.speed_y * self.dir_y
+		if shark_bait:
+			self.x += 2*self.speed_x
+		else:
+			self.x -= self.speed_x
+			if self.y > WIN_HEIGHT - 200:
+				self.dir_y = -1
+			if self.y <= water_height:
+				self.dir_y = 1
+			self.y += self.speed_y * self.dir_y
 
 class CrazySquid():
 	def __init__(self, x, y):
@@ -141,35 +159,142 @@ class CrazySquid():
 		surf.blit(self.img, (self.x, self.y))
 	
 	def move(self):
-		if self.x < 0 - 50:
-			self.x = WIN_WIDTH
-		self.x -= self.speed_x
-		if self.y > WIN_HEIGHT - 250 or self.y <= water_height+13:
-			self.dir_y *= -1
-		self.y += self.speed_y * self.dir_y
+		if shark_bait:
+			self.x += 2*self.speed_x
+		else:
+			self.x += self.speed_x * random.choice([-4, -3, -2, -1, 0])
+			if self.y > WIN_HEIGHT - 200:
+				self.dir_y = -1
+			if self.y <= water_height:
+				self.dir_y = 1
+			self.y += random.choice([2, 4, 8]) * self.dir_y
+			
+class Shark():
+	def __init__(self, x, y):
+		self.img = SHARK
+		self.x = x
+		self.y = y
+		self.dir_y = 1
+		self.speed_x = 21
+		self.speed_y = 5
 		
-bob = HappySquid(WIN_WIDTH, WIN_HEIGHT/2)		
-crazy_bob = CrazySquid(WIN_WIDTH/2, WIN_HEIGHT-300)
+	def draw(self, surf):
+		surf.blit(self.img, (self.x, self.y))
+	
+	def move(self):
+		if self.x >= WIN_WIDTH + 6250:
+			self.x = random.choice([-7000, -6500, -6000, -5500])
+		else:
+			self.x += self.speed_x
+
+class GatorCorn():
+	def __init__(self, x, y):
+		self.img = SHARK
+		self.x = x
+		self.y = y
+		self.dir_y = 1
+		self.speed_x = 13
+		self.speed_y = 5
+		
+	def draw(self, surf):
+		surf.blit(self.img, (self.x, self.y))
+	
+	def move(self):
+		if self.x >= WIN_WIDTH + 500:
+			self.x = -6000
+		else:
+			self.x += self.speed_x
+		
+		
+class Cora():
+	def __init__(self, x, y):
+		self.img = SHARK
+		self.x = x
+		self.y = y
+		self.dir_y = 1
+		self.speed_x = 13
+		self.speed_y = 5
+		
+	def draw(self, surf):
+		surf.blit(self.img, (self.x, self.y))
+	
+	def move(self):
+		self.x += self.speed_x
+		
+def calc_coin_speed(coin, t):
+		if coin.y <= water_height:
+			return int(0.5*COIN_ACCEL*t**2)
+		else:
+			return COIN_SINK_SPEED
+		
+class Coin():
+	def __init__(self):
+		self.x = random.randint(0, WIN_WIDTH)
+		self.y = -COIN_RADIUS
+		self.speed_x = -1
+		self.drop_time = 0
+		self.speed_y = 0
+		self.value = random.choice([1, 5, 10, 25, 50])
+	
+	def draw(self, surf):
+		pygame.draw.circle(surf, GOLD, (self.x, self.y), COIN_RADIUS)
+	
+	def move(self):
+		self.x += self.speed_x
+		self.drop_time += 1
+		speed_y = calc_coin_speed(self, self.drop_time)
+		self.y += speed_y
+
+squid_ls = []
+coins = []
+scary_shark = Shark(-6000, water_height)
+bro_shark = Shark(-6500, WIN_HEIGHT - 100)
 
 #game loop
 while True:
 	draw_ocean(screen, wave_x, water_color)
-	bob.draw(screen)
-	crazy_bob.draw(screen)
+	for coin in coins:
+		if coin.y >= WIN_HEIGHT + COIN_RADIUS:
+			coins.remove(coin)
+		coin.draw(screen)
+		coin.move()
+	for squid in squid_ls:
+		if squid.x <= -100:
+			squid_ls.remove(squid)
+		squid.draw(screen)
+		squid.move()
+	scary_shark.draw(screen)
+	bro_shark.draw(screen)
 	wave_x = move_wave(wave_x)
 	water_height = update_water_height(water_height)
-	if color_counter >= COLOR_FRAMES:
+	if color_count >= COLOR_FRAMES:
 		water_color = update_water_color(water_color)
-		color_counter = 0
+		color_count = 0
 	else:
-		color_counter += 1
-	bob.move()
-	crazy_bob.move()
+		color_count += 1
+	if shark_bait:
+		scary_shark.move()
+		bro_shark.move()
+	scary_shark.y = water_height+50
+	bro_shark.y = WIN_HEIGHT - 150
 	for event in pygame.event.get():
 		if event.type == pygame.QUIT:
 			pygame.quit()
 			sys.exit()
 			
 	pygame.display.update()
+	if coin_count >= coin_birth:
+		coins.append(Coin())
+		coin_birth = max(int(FPS/2), coin_birth - 1)
+		coin_count = -1
+	coin_count += 1
+	if squid_count == crazy_birth:
+		squid_ls.append(CrazySquid(WIN_WIDTH, random.randint(water_height, WIN_HEIGHT)))
+		squid_count = -1
+		crazy_birth = max(int(crazy_birth * (1-GROWTH_RATE)), FPS*3)
+		happy_birth = max(int(happy_birth * (1-GROWTH_RATE)), FPS*2)
+	elif squid_count % happy_birth == 0:
+		squid_ls.append(HappySquid(WIN_WIDTH, random.randint(water_height, WIN_HEIGHT)))
+	squid_count += 1
 	clock.tick(FPS)
 
