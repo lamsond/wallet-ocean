@@ -28,6 +28,7 @@ NIGHT = (11, 22, 33)
 OCEAN = (0, 153, 202)
 BLOOD_OCEAN = (153, 0, 49)
 GOLD = (240, 220, 20)
+BLACK = (0, 0, 0)
 
 #game vars
 water_height = int(WIN_HEIGHT/(PHI+1))
@@ -50,6 +51,7 @@ pygame.init()
 screen = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
 pygame.display.set_caption("Cora's Wallet Ocean")
 clock = pygame.time.Clock()
+font_obj = pygame.font.Font('freesansbold.ttf', 24)
 
 #return image to given file path and scale factor
 def init_image(path, sf):
@@ -63,7 +65,7 @@ HAPPY_SQUID = init_image("SquidPink.png", 0.18)
 CRAZY_SQUID = init_image("SquidOrange.png", 0.18)
 GATOR_CORN = init_image("GatorCorn.png", 0.65)
 SHARK = init_image("SharkGrey.png", 0.65)
-CORA = init_image("CoraAlpha.png", 0.42)
+CORA = init_image("CoraAlpha.png", 0.34)
 
 #draw waves and night sky
 def draw_ocean(surf, x, clr):
@@ -232,7 +234,11 @@ class Coin():
 	
 	def draw(self, surf):
 		pygame.draw.circle(surf, GOLD, (self.x, self.y), COIN_RADIUS)
-	
+		text_surf = font_obj.render(str(self.value), True, BLACK, GOLD)
+		text_rect = text_surf.get_rect()
+		text_rect.center = (self.x, self.y)
+		surf.blit(text_surf, text_rect)
+		
 	def move(self):
 		self.x += self.speed_x
 		self.drop_time += 1
@@ -296,14 +302,16 @@ while True:
 	keys = pygame.key.get_pressed()
 	if keys[pygame.K_RIGHT]:
 		cora.x += 5
-	elif keys[pygame.K_LEFT]:
+	elif keys[pygame.K_LEFT] and cora.x > 0:
 		cora.x -= 6
-	else:
+	elif cora.x > 0:
 		cora.x -= 1
 	if keys[pygame.K_DOWN]:
 		cora.y += 5
-	if keys[pygame.K_UP]:
-		cora.y -= 5
+	elif keys[pygame.K_UP] and cora.y > water_height:
+		cora.y -= 6
+	elif cora.y > water_height:
+		cora.y -= 1
 		
 	clock.tick(FPS)
 
