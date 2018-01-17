@@ -48,13 +48,16 @@ coin_birth = FPS*5
 game_over = False
 score = 0
 
+#debug vars
+hit_box = False
+
 #init game spacetime
 pygame.init()
 screen = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
 pygame.display.set_caption("Cora's Wallet Ocean")
 clock = pygame.time.Clock()
 font_obj = pygame.font.Font('freesansbold.ttf', 24)
-big_font_obj = pygame.font.Font('freesansbold.ttf', 48)
+big_font_obj = pygame.font.Font('freesansbold.ttf', 72)
 super_big_font_obj = pygame.font.Font('freesansbold.ttf', 144)
 
 #return image to given file path and scale factor
@@ -70,6 +73,10 @@ CRAZY_SQUID = init_image("SquidOrange.png", 0.18)
 GATOR_CORN = init_image("GatorCorn.png", 0.65)
 SHARK = init_image("SharkGrey.png", 0.65)
 CORA = init_image("CoraAlpha.png", 0.34)
+
+#game sounds
+kaching = pygame.mixer.Sound("ching.wav")
+bomb = pygame.mixer.Sound("bomb.wav")
 
 #draw waves and night sky
 def draw_ocean(surf, x, clr):
@@ -256,31 +263,38 @@ def update_score(player, coin_ls, sc):
 		coin_rect = pygame.Rect(coin.x-COIN_RADIUS, coin.y-COIN_RADIUS, 2*COIN_RADIUS, 2*COIN_RADIUS) 
 		if player_rect.colliderect(coin_rect):
 			sc += coin.value
+			kaching.play()
 			coin_ls.remove(coin)
 	return sc
 	
 def draw_scoreboard(surf, sc):
-	text_surf = big_font_obj.render(str(sc), True, BLACK, GOLD)
+	text_surf = big_font_obj.render(str(sc), True, GOLD)
 	text_rect = text_surf.get_rect()
-	text_rect.center = (WIN_WIDTH - 50, 50)
+	text_rect.center = (WIN_WIDTH - 75, 50)
 	surf.blit(text_surf, text_rect)
 
-def death_check(player, sq, sh):
+def death_check(player, sq, sh, surf):
 	death = False
 	size = player.img.get_size()
 	player_rect = pygame.Rect(player.x, player.y, size[0], size[1])
+	if hit_box:
+		pygame.draw.rect(surf, BLACK, player_rect, 3)
 	for squid in sq:
 		sq_size = squid.img.get_size()
-		sq_rect = pygame.Rect(squid.x, squid.y, size[0], size[1])
+		sq_rect = pygame.Rect(squid.x+20, squid.y+50, int(size[0]/2)+13, int(size[1]))
 		death = player_rect.colliderect(sq_rect)
+		if hit_box:
+			pygame.draw.rect(surf, BLACK, sq_rect, 3)
 	for shark in sh:
 		sh_size = shark.img.get_size()
-		sh_rect = pygame.Rect(shark.x, shark.y, size[0], size[1])
+		sh_rect = pygame.Rect(shark.x, shark.y, size[0]*4, size[1])
 		death = player_rect.colliderect(sh_rect)
+		if hit_box:
+			pygame.draw.rect(surf, BLACK, sh_rect, 3)
 	return death
 
 def draw_death_screen(surf):
-	text_surf = big_font_obj.render("Game Over", True, BLOOD_OCEAN, BLACK)
+	text_surf = super_big_font_obj.render("Game Over", True, BLACK)
 	text_rect = text_surf.get_rect()
 	text_rect.center = (int(WIN_WIDTH/2), int(WIN_HEIGHT/2))
 	surf.blit(text_surf, text_rect)
@@ -293,6 +307,12 @@ cora = Cora(int(WIN_WIDTH/2), 400)
 #game loop
 while True:
 	draw_ocean(screen, wave_x, water_color)
+	if game_over:
+		draw_death_screen(screen)
+	if not game_over:
+		game_over = death_check(cora, squids, sharks, screen)
+		if game_over:
+			bomb.play()
 	for coin in coins:
 		if coin.y >= WIN_HEIGHT + COIN_RADIUS:
 			coins.remove(coin)
@@ -359,11 +379,6 @@ while True:
 			cora.y -= 6
 		elif cora.y > water_height:
 			cora.y -= 1
-	
-	if not game_over:
-		game_over = death_check(cora, squids, sharks)
-	if game_over:
-		draw_death_screen(screen)
 		
 	clock.tick(FPS)
 
