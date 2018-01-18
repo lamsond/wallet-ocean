@@ -374,9 +374,9 @@ while True:
 		if keys[pygame.K_RIGHT]:
 			cora.x += 5
 		elif keys[pygame.K_LEFT] and cora.x > 0:
-			cora.x -= 5
+			cora.x -= 6
 		elif cora.x > 0:
-			cora.x -= 0
+			cora.x -= 1
 		if keys[pygame.K_DOWN]:
 			cora.y += 5
 		elif keys[pygame.K_UP] and cora.y > water_height:
