@@ -78,6 +78,9 @@ CORA = init_image("CoraAlpha.png", 0.34)
 kaching = pygame.mixer.Sound("ching.wav")
 bomb = pygame.mixer.Sound("bomb.wav")
 
+pygame.mixer.music.load("arabesque.mp3")
+pygame.mixer.music.play(-1, 0.0)
+
 #draw waves and night sky
 def draw_ocean(surf, x, clr):
 	surf.fill(clr)
@@ -274,7 +277,6 @@ def draw_scoreboard(surf, sc):
 	surf.blit(text_surf, text_rect)
 
 def death_check(player, sq, sh, surf):
-	death = False
 	size = player.img.get_size()
 	player_rect = pygame.Rect(player.x, player.y, size[0], size[1])
 	if hit_box:
@@ -282,16 +284,18 @@ def death_check(player, sq, sh, surf):
 	for squid in sq:
 		sq_size = squid.img.get_size()
 		sq_rect = pygame.Rect(squid.x+20, squid.y+50, int(size[0]/2)+13, int(size[1]))
-		death = player_rect.colliderect(sq_rect)
+		if player_rect.colliderect(sq_rect):
+			return True
 		if hit_box:
 			pygame.draw.rect(surf, BLACK, sq_rect, 3)
 	for shark in sh:
 		sh_size = shark.img.get_size()
 		sh_rect = pygame.Rect(shark.x, shark.y, size[0]*4, size[1])
-		death = player_rect.colliderect(sh_rect)
+		if player_rect.colliderect(sh_rect):
+			return True
 		if hit_box:
 			pygame.draw.rect(surf, BLACK, sh_rect, 3)
-	return death
+	return False
 
 def draw_death_screen(surf):
 	text_surf = super_big_font_obj.render("Game Over", True, BLACK)
@@ -370,9 +374,9 @@ while True:
 		if keys[pygame.K_RIGHT]:
 			cora.x += 5
 		elif keys[pygame.K_LEFT] and cora.x > 0:
-			cora.x -= 6
+			cora.x -= 5
 		elif cora.x > 0:
-			cora.x -= 1
+			cora.x -= 0
 		if keys[pygame.K_DOWN]:
 			cora.y += 5
 		elif keys[pygame.K_UP] and cora.y > water_height:
@@ -381,4 +385,3 @@ while True:
 			cora.y -= 1
 		
 	clock.tick(FPS)
-
