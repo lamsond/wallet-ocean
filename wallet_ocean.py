@@ -79,7 +79,7 @@ kaching = pygame.mixer.Sound("ching.wav")
 bomb = pygame.mixer.Sound("bomb.wav")
 
 pygame.mixer.music.load("arabesque.mp3")
-pygame.mixer.music.play(-1, 0.0)
+#pygame.mixer.music.play(-1, 0.0)
 
 #draw waves and night sky
 def draw_ocean(surf, x, clr):
@@ -266,7 +266,7 @@ def update_score(player, coin_ls, sc):
 		coin_rect = pygame.Rect(coin.x-COIN_RADIUS, coin.y-COIN_RADIUS, 2*COIN_RADIUS, 2*COIN_RADIUS) 
 		if player_rect.colliderect(coin_rect):
 			sc += coin.value
-			kaching.play()
+			#kaching.play()
 			coin_ls.remove(coin)
 	return sc
 	
@@ -316,7 +316,8 @@ while True:
 	if not game_over:
 		game_over = death_check(cora, squids, sharks, screen)
 		if game_over:
-			bomb.play()
+			print("Game Over")
+			#bomb.play()
 	for coin in coins:
 		if coin.y >= WIN_HEIGHT + COIN_RADIUS:
 			coins.remove(coin)
